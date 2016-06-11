@@ -1,11 +1,14 @@
-var util = require('util')
-var process = require('process')
-var domain = require('domain').create()
-var Batches = require('./lib/Batch')
-var Repeater = require('./lib/repeater')
-var Requester = require("./lib/Requester")
-var Logger = require("./lib/Logger")
-Logger.setDisable()
+#!/usr/bin/env node
+var util 		= require('util')
+var process 	= require('process')
+var domain 		= require('domain').create()
+var Batches 	= require('../lib/Batch')
+var Repeater 	= require('../lib/repeater')
+var Requester 	= require("../lib/Requester")
+
+var Log			= require('../lib/Log')
+var moduleName = "b_client"
+var logger = Log.create(moduleName, Log.DEBUG)
 
 
 var msgs = [
@@ -39,30 +42,12 @@ if(big_messages){
 	messages = msgs;
 }
 
-	var mb = new Batches({
-		nbr_batches : 60,
-		nbr_per_batch : 100,
-		messages	: messages,
-		callback : function(statsHandler){
-			statsHandler.print()
-			console.log("WE are all done")
-		}
-	})
-return
-
-
-domain.on('error', function(){
-	console.log("domain error")
-	console.trace('domain error');
-});
-domain.run(function(){
-	var mb = new Batches({
-		nbr_batches : 1,
-		nbr_per_batch : 1,
-		messages	: messages,
-		callback : function(statsHandler){
-			statsHandler.print()
-			console.log("WE are all done")
-		}
-	})
-});
+var mb = new Batches({
+	nbr_batches : 50,
+	nbr_per_batch : 100,
+	messages	: messages,
+	callback : function(statsHandler){
+		statsHandler.print()
+		console.log("WE are all done")
+	}
+})
