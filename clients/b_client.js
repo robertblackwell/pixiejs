@@ -28,7 +28,7 @@ function bulk(str, count){
 	return s;
 }
 
-var big_messages = true
+var big_messages = false
 
 if(big_messages){
 	for(var i = 0; i < msgs.length; i++){
@@ -40,7 +40,7 @@ if(big_messages){
 }
 
 	var mb = new Batches({
-		nbr_batches : 40,
+		nbr_batches : 60,
 		nbr_per_batch : 100,
 		messages	: messages,
 		callback : function(statsHandler){
@@ -57,8 +57,8 @@ domain.on('error', function(){
 });
 domain.run(function(){
 	var mb = new Batches({
-		nbr_batches : 3,
-		nbr_per_batch : 1000,
+		nbr_batches : 1,
+		nbr_per_batch : 1,
 		messages	: messages,
 		callback : function(statsHandler){
 			statsHandler.print()
