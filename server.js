@@ -9,7 +9,7 @@ var BLK = require('./lib/blk')
 
 var Log			= require('./lib/Log')
 var moduleName = "server::handler_func"
-var logger = Log.create(moduleName, Log.ERROR)
+var logger = Log.create(moduleName, Log.DEBUG)
 
 
 

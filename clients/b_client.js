@@ -5,6 +5,7 @@ var domain 		= require('domain').create()
 var Batches 	= require('../lib/Batch')
 var Repeater 	= require('../lib/repeater')
 var Requester 	= require("../lib/Requester")
+var BLKMessage	= require('../lib/BLKMessage')
 
 var Log			= require('../lib/Log')
 var moduleName = "b_client"
@@ -23,30 +24,31 @@ if( process.argv.length > 2 ){
 }
 
 var msgs = [
-	"1111111 oneoneoneoneoneoneoneone 1111111",
-	"2222222 twotwotwotwotwotwotwotwotwotwo 222222",
-	"3333333333 threethreethreethreethreethreethree 333333",
-	"444444 fourfourfourfourfourfourfour 44444",
-	"555555555 fivefivefivefivefivefivefivefivefivefivefivefivefivefive 5555"
+	BLKMessage.createMessage(8002, "NORMAL", "1111111 oneoneoneoneoneoneoneone 1111111"),
+	BLKMessage.createMessage(8002, "NORMAL", "2222222 twotwotwotwotwotwotwotwotwotwo 222222"),
+	BLKMessage.createMessage(8002, "NORMAL", "3333333333 threethreethreethreethreethreethree 333333"),
+	BLKMessage.createMessage(8002, "NORMAL", "444444 fourfourfourfourfourfourfour 44444"),
+	BLKMessage.createMessage(8002, "NORMAL", "555555555 fivefivefivefivefivefivefivefivefivefivefivefivefivefive 5555")
 ];
 
 var messages = [];
 
-function bulk(str, count){
+function bulkUpMessageBody(msg, count){
+	var str = msg.body
 	var s = "";
 	for(;;){
 		s += str
 		if( s.length > 100000)
 			break
 	}
-	return s;
+	msg.setBody(s)
 }
 
 var big_messages = false
 
 if(big_messages){
 	for(var i = 0; i < msgs.length; i++){
-		messages.push( bulk( msgs[i] ) )
+		messages.push( bulkUpMessageBody( msgs[i] ) )
 	}
 	msgs = null
 }else{

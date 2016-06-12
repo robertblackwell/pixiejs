@@ -1,26 +1,20 @@
 #!/usr/bin/env node
 //
 //
-// This is a client process that is intended to exercise a server
-//
-// Starts multiple clients each of which sends a single request
-//
+// Tunnel client
 //
 //
 "use strict";
 var process = require('process')
 var util		= require('util')
 
-var Driver 		= require('../lib/Driver')
-var Exerciser 	= require("../lib/Exerciser")
-var Requester 	= require("../lib/Requester")
+var Tunnel 		= require("../lib/Tunnel")
 var BLK 		= require('../lib/blk')
-var Logger		= require('../lib/Logger')
 var BLKMessage	= require('../lib/BLKMessage')
 
 var Log			= require('../lib/Log')
 var moduleName = "m_client"
-var logger = Log.create(moduleName, Log.WARN)
+var logger = Log.create(moduleName, Log.DEBUG)
 
 //
 // send this message to server and call cb when done
@@ -31,32 +25,38 @@ function Client(options)
 	this.msg = options.msg
 	this.id_str = options.id;
 	this.port = options.port
-// 	this.port = msg.destinationPort;
 
 	logger(Log.VERBOSE, util.inspect(this.msg))
 	logger(Log.VERBOSE, "PORT: " + this.msg.destinatiionPort)
 
-	var req = new Requester(this.port)
+	var tunnel = new Tunnel(this.port)
 	
 	var onConnect = () => {
 		logger(Log.DEBUG, "client "+ this.id_str +" :connected")
 		this.msg.setBody( "From client : "+this.id_str +":"+ this.msg.body)
 		logger(Log.DEBUG, util.inspect(this.msg))
 
-		req.sendMessage(this.msg, ()=>{
+		tunnel.write(this.msg, ()=>{
 			logger(Log.WARN, "client " + this.id_str + " sent something to server")
 		})
-	}
+	}.bind(this)
 	
 	var onData = (data) => {
 		logger(Log.DEBUG, "XX client "+ this.id_str +" ::onData : " + data)
 		this.cb(this)
 	}
-	req.on('connect', onConnect)
-	req.on('data', onData)
+
+	var onError = (data) => {
+		logger(Log.DEBUG, "onError "+ this.id_str +" ::onError : " + data)
+		this.cb(this)
+	}
+
+	tunnel.on('connect', onConnect)
+	tunnel.on('data', onData)
+	tunnel.on('error', onError)
 	
 	this.start = function(){
-		req.connect();
+		tunnel.connect();
 	}
 }
 
