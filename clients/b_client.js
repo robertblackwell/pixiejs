@@ -10,6 +10,17 @@ var Log			= require('../lib/Log')
 var moduleName = "b_client"
 var logger = Log.create(moduleName, Log.DEBUG)
 
+var _port
+var default_port = 8001
+
+if( process.argv.length > 2 ){
+	_port = parseInt(process.argv[2])
+	if( isNaN(_port) )
+		_port = default_port 
+	logger(Log.ERROR, "First argument is " + _port + " type of " + typeof _port )
+}else{
+	_port = default_port;
+}
 
 var msgs = [
 	"1111111 oneoneoneoneoneoneoneone 1111111",
@@ -45,6 +56,7 @@ if(big_messages){
 var mb = new Batches({
 	nbr_batches : 50,
 	nbr_per_batch : 100,
+	port : _port,
 	messages	: messages,
 	callback : function(statsHandler){
 		statsHandler.print()

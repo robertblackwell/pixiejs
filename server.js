@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 var net 			= require('net')
 var EventEmitter 	= require('events');
 var util 			= require('util')
@@ -23,5 +24,17 @@ var handler = function(inMsg){
 	return outMsg;
 }
 
-console.log("Server starting on " + 8001)
-var server = BLK.createServer(handler).listen(8001)
+var _port
+var default_port = 8001
+
+if( process.argv.length > 2 ){
+	_port = parseInt(process.argv[2])
+	if( isNaN(_port) )
+		_port = default_port 
+	logger(Log.ERROR, "First argument is " + _port + " type of " + typeof _port )
+}else{
+	_port = default_port;
+}
+
+console.log("Server starting on " + _port)
+var server = BLK.createServer(handler).listen(_port)

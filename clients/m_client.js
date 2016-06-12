@@ -25,28 +25,32 @@ var logger = Log.create(moduleName, Log.WARN)
 //
 // send this message to server and call cb when done
 //
-function Client( _id_str, msg, cb)
+function Client(options) 
 {
-	this.id_str = _id_str;
-	this.port = msg.destinationPort;
-	logger(Log.VERBOSE, util.inspect(msg))
-	logger(Log.VERBOSE, "PORT: " + msg.destinatiionPort)
+	this.cb = options.cb
+	this.msg = options.msg
+	this.id_str = options._id_str;
+	this.port = options.port
+// 	this.port = msg.destinationPort;
+
+	logger(Log.VERBOSE, util.inspect(this.msg))
+	logger(Log.VERBOSE, "PORT: " + this.msg.destinatiionPort)
 
 	var req = new Requester(this.port)
 	
 	var onConnect = () => {
 		logger(Log.DEBUG, "client "+ this.id_str +" :connected")
-		msg.setBody( "From client : "+this.id_str +":"+ msg.body)
-		logger(Log.DEBUG, util.inspect(msg))
+		this.msg.setBody( "From client : "+this.id_str +":"+ this.msg.body)
+		logger(Log.DEBUG, util.inspect(this.msg))
 
-		req.sendMessage(msg, ()=>{
+		req.sendMessage(this.msg, ()=>{
 			logger(Log.WARN, "client " + this.id_str + " sent something to server")
 		})
 	}
 	
 	var onData = (data) => {
 		logger(Log.DEBUG, "XX client "+ this.id_str +" ::onData : " + data)
-		cb(this)
+		this.cb(this)
 	}
 	req.on('connect', onConnect)
 	req.on('data', onData)
@@ -59,8 +63,9 @@ function Client( _id_str, msg, cb)
 //
 // start a number of clients all of whom will send the same message and wait
 //
-function MultiClientRunner(numberOfClients, msg)
+function MultiClientRunner(numberOfClients, _port, msg)
 {
+	this.port = _port
 	this.client_count = numberOfClients;
 	this.clients_remaining = numberOfClients;
 	this.clients = [];
@@ -80,8 +85,15 @@ function MultiClientRunner(numberOfClients, msg)
 		logger(Log.DEBUG, util.inspect(msg))
 		logger(Log.DEBUG, util.inspect(dup_msg))
 
-		var client = new Client("Client[ " +i + " ]", dup_msg, client_done )
+		var client = new Client({
+			id: "Client[ " +i + " ]", 
+			msg: dup_msg, 
+			port : this.port,
+			cb: client_done
+		})
+		
 		logger(Log.DEBUG, util.inspect(client))
+		
 		this.clients.push(client)
 	}
 	this.start = function(){
@@ -96,6 +108,18 @@ var testMessages = [
 	BLKMessage.createMessage(8001, "NORMAL", "This is a message from client 222")
 ];
 
-var test = new MultiClientRunner(1, testMessages[0]);
+var _port
+var default_port = 8001
+
+if( process.argv.length > 2 ){
+	_port = parseInt(process.argv[2])
+	if( isNaN(_port) )
+		_port = default_port 
+	logger(Log.ERROR, "First argument is " + _port + " type of " + typeof _port )
+}else{
+	_port = default_port;
+}
+
+var test = new MultiClientRunner(1, _port, testMessages[0]);
 test.start();
 
