@@ -50,6 +50,7 @@ function Client(options)
 	
 	var onData = (data) => {
 		logger(Log.DEBUG, "XX client "+ this.id_str +" ::onData : " + data)
+		req.end()
 		this.cb(this)
 	}
 	req.on('connect', onConnect)
@@ -120,6 +121,6 @@ if( process.argv.length > 2 ){
 	_port = default_port;
 }
 
-var test = new MultiClientRunner(1, _port, testMessages[0]);
+var test = new MultiClientRunner(100, _port, testMessages[0]);
 test.start();
 

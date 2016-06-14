@@ -13,8 +13,8 @@ var BLK 		= require('../lib/blk')
 var BLKMessage	= require('../lib/BLKMessage')
 
 var Log			= require('../lib/Log')
-var moduleName = "m_client"
-var logger = Log.create(moduleName, Log.DEBUG)
+var moduleName = "t_client"
+var logger = Log.create(moduleName, Log.WARN)
 
 //
 // send this message to server and call cb when done
@@ -22,18 +22,38 @@ var logger = Log.create(moduleName, Log.DEBUG)
 function Client(options) 
 {
 	this.cb = options.cb
-	this.msg = options.msg
+	var tmsg = BLKMessage.createMessage(options.msg.destinationPort, options.msg.verb, this.id_str + options.msg.body);
+	this.msg = tmsg
 	this.id_str = options.id;
 	this.port = options.port
-
+	this.messageCount = 0;
+	
 	logger(Log.VERBOSE, util.inspect(this.msg))
 	logger(Log.VERBOSE, "PORT: " + this.msg.destinatiionPort)
 
-	var tunnel = new Tunnel(this.port)
+	var tunnel = new Tunnel(this.port, this.msg.destinationPort)
+	
+	var writeMessage = function(){
+		this.messageCount++;
+		if( this.messageCount > 5 ){
+		logger(Log.WARN, "XX client "+ this.id_str +" messageCount EXCEEDED - close tunnel " + this.messageCount)
+			tunnel.close()
+			this.cb(this);
+			return;
+		}
+		this.msg.setBody( this.id_str + "tunnel data [" + this.messageCount  + "]")
+		logger(Log.DEBUG, "WRITING ANOTHER MESSAGE")
+// 		process.exit();
+
+		tunnel.write(this.msg, ()=>{
+			
+			logger(Log.WARN, "client " + this.id_str + " sent something to server")
+		})		
+	}.bind(this)
 	
 	var onConnect = () => {
 		logger(Log.DEBUG, "client "+ this.id_str +" :connected")
-		this.msg.setBody( "From client : "+this.id_str +":"+ this.msg.body)
+		this.msg.setBody( this.msg.body)
 		logger(Log.DEBUG, util.inspect(this.msg))
 
 		tunnel.write(this.msg, ()=>{
@@ -41,13 +61,15 @@ function Client(options)
 		})
 	}.bind(this)
 	
-	var onData = (data) => {
-		logger(Log.DEBUG, "XX client "+ this.id_str +" ::onData : " + data)
-		this.cb(this)
+	var onData = (msg) => {
+		logger(Log.WARN, "XX client "+ this.id_str +" ::onData : " + msg.toString())
+		writeMessage();
+// 		this.cb(this)
 	}
 
 	var onError = (data) => {
 		logger(Log.DEBUG, "onError "+ this.id_str +" ::onError : " + data)
+		writeMessage();
 		this.cb(this)
 	}
 
@@ -120,6 +142,6 @@ if( process.argv.length > 2 ){
 	_port = default_port;
 }
 
-var test = new MultiClientRunner(1, _port, testMessages[0]);
+var test = new MultiClientRunner(100, _port, testMessages[0]);
 test.start();
 

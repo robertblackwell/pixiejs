@@ -18,7 +18,9 @@ var handler = function(inMsg){
 	
 	var outMsg = BLKMessage.createMessage(inMsg.destinationPort, inMsg.verb, inMsg.body);
 	
-	outMsg.setBody("Handler function Got this  : [" + inMsg.body + "]")
+// 	outMsg.setBody("Handler function Got this  : [" + inMsg.body + "]")
+	outMsg.setBody(inMsg.body)
+
 	logger(Log.WARN,  "sending ", util.inspect(outMsg))
 	
 	return outMsg;
